@@ -251,6 +251,21 @@ class Config(object):
     OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
     OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET")
 
+    '''
+    ON_HEROKU Specifies whether or not CTFd is hosted on Heroku; if so it skips the DB check and assumes the 
+    DATABASE_URL is prepopulated
+    '''
+    '''
+        ON_HEROKU determines whether CTFd is running on Heroku or not.
+    '''
+    ON_HEROKU = True
+
+    #HEROKU_CHECK = os.environ.get('ON_HEROKU')
+    #if HEROKU_CHECK:
+     #   ON_HEROKU = HEROKU_CHECK
+    #else:
+     #   ON_HEROKU = False
+
 
 class TestingConfig(Config):
     SECRET_KEY = "AAAAAAAAAAAAAAAAAAAA"

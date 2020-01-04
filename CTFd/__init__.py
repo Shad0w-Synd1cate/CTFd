@@ -9,6 +9,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from six.moves import input
+from sqlalchemy.engine.url import make_url
+from sqlalchemy_utils import database_exists, create_database
 
 from CTFd import utils
 from CTFd.utils.migrations import migrations, create_database, stamp_latest_revision
@@ -142,7 +144,29 @@ def create_app(config="CTFd.config.Config"):
             Tracking,
         )
 
-        url = create_database()
+        url = make_url(app.config['SQLALCHEMY_DATABASE_URI'])
+        if url.drivername == 'postgres':
+            url.drivername = 'postgresql'
+
+        if url.drivername.startswith('mysql'):
+            url.query['charset'] = 'utf8mb4'
+
+        # Creates database if the database does not exist and ON_HEROKU is set to False; This is a slightly hacky
+        # workaround to make CTFd work on Heroku due to some upstream issue with SQLAlchemy's database_exists function
+        # and Heroku
+        # (For some reason, the database isn't found, so it tries to create it; which isn't allowed on Heroku)
+        if app.config['ON_HEROKU']:         
+            if url.drivername.startswith('postgres'):
+                connection = psycopg2.connect(str(url), sslmode='require')
+            if url.drivername.startswith('mysql'):
+                create_database(url, encoding='utf8mb4')
+
+        if not app.config['ON_HEROKU']:
+           if not database_exists(url):
+               if url.drivername.startswith('mysql'):
+                   create_database(url, encoding='utf8mb4')
+               else:
+                   create_database(url)
 
         # This allows any changes to the SQLALCHEMY_DATABASE_URI to get pushed back in
         # This is mostly so we can force MySQL's charset
