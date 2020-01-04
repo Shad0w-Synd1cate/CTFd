@@ -1,5 +1,6 @@
 import sys
 import os
+import psycopg2
 
 from distutils.version import StrictVersion
 from flask import Flask, Request
